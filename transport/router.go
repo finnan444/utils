@@ -13,18 +13,20 @@ import (
 )
 
 var (
-	postRoutes    = make(map[string]RouterFunc)
-	postRegRoutes = make(map[*regexp.Regexp]RouterFunc)
-	getRoutes     = make(map[string]RouterFunc)
-	getRegRoutes  = make(map[*regexp.Regexp]RouterFunc)
-	clientsPool   = sync.Pool{
+	postRoutes       = make(map[string]RouterFunc)
+	postSimpleRoutes = make(map[string]fasthttp.RequestHandler)
+	postRegRoutes    = make(map[*regexp.Regexp]RouterFunc)
+	getRoutes        = make(map[string]RouterFunc)
+	getSimpleRoutes  = make(map[string]fasthttp.RequestHandler)
+	getRegRoutes     = make(map[*regexp.Regexp]RouterFunc)
+	clientsPool      = sync.Pool{
 		New: func() interface{} {
 			return &fasthttp.Client{}
 		},
 	}
 	timings    = make(map[string]*median)
 	timingsReg = make(map[*regexp.Regexp]*median)
-	logger     = log.New(os.Stderr, "\n-----------------------------\n", log.LstdFlags)
+	logger     = log.New(os.Stdout, "\n-----------------------------\n", log.LstdFlags)
 )
 
 func init() {
@@ -94,7 +96,9 @@ func AddPostRegexpRoute(path string, handler RouterFunc) {
 }
 
 // ProcessRouting returns router
-func ProcessRouting(server PathesLogger) func(*fasthttp.RequestCtx) {
+// Обрабатывает только GET и POST
+// логи обрезаются только у POST запросов
+func ProcessRouting(server PathesLogger) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		now := time.Now()
 		path := string(ctx.Path())
@@ -145,8 +149,8 @@ func ProcessRouting(server PathesLogger) func(*fasthttp.RequestCtx) {
 	}
 }
 
-// ProcessSimpleRouting returns router
-func ProcessSimpleRouting() func(*fasthttp.RequestCtx) {
+// ProcessSimpleRouting тоже самое что ProcessRouting, только без логирования
+func ProcessSimpleRouting() fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		now := time.Now()
 		path := string(ctx.Path())
@@ -180,6 +184,44 @@ func ProcessSimpleRouting() func(*fasthttp.RequestCtx) {
 				ctx.Error("Not found", fasthttp.StatusNotFound)
 			}
 		} else {
+			ctx.Error("Not found", fasthttp.StatusNotFound)
+		}
+	}
+}
+
+// ProcessStandardRouting работает с хендлерами, соотв стандартной сигнатуре fasthhtp
+// без regexp routes + обрабатывает только GET и POST
+// без статистики по таймингам
+// логи обрезаются только у POST запросов
+func ProcessStandardRouting(server PathesLogger) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		path := string(ctx.Path())
+
+		switch ctx.Method() {
+		case []byte("POST"):
+			body := ctx.PostBody()
+			if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
+				if (logFlag & FullLog) != 0 {
+					logger.Printf("[POST %s %d][Request] %s\n", path, ctx.ID(), body)
+				} else {
+					logger.Printf("[POST %s %d][Request] %s\n", path, ctx.ID(), body[:ints.MinInt(len(body), 255)])
+				}
+			}
+			if handler, ok := postSimpleRoutes[path]; ok {
+				handler(ctx)
+			} else {
+				ctx.Error("Not found", fasthttp.StatusNotFound)
+			}
+		case []byte("GET"):
+			if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
+				logger.Printf("[GET %s %d][Request] %s\n", path, ctx.ID(), ctx.QueryArgs().QueryString())
+			}
+			if handler, ok := getSimpleRoutes[path]; ok {
+				handler(ctx)
+			} else {
+				ctx.Error("Not found", fasthttp.StatusNotFound)
+			}
+		default:
 			ctx.Error("Not found", fasthttp.StatusNotFound)
 		}
 	}
