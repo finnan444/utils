@@ -72,6 +72,14 @@ func AddGetRoute(path string, handler RouterFunc) {
 	timings["[GET] "+path] = &median{}
 }
 
+func AddGetRouteSimple(path string, handler fasthttp.RequestHandler) {
+	getSimpleRoutes[path] = handler
+}
+
+func AddPostRouteSimple(path string, handler fasthttp.RequestHandler) {
+	postSimpleRoutes[path] = handler
+}
+
 // AddGetRegexpRoute adds get route. For example /accounts/([0-9]+)/suggest/.
 //The result of regex will be passed as s third parameter in router.RouterFunc
 func AddGetRegexpRoute(path string, handler RouterFunc) {
