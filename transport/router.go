@@ -205,8 +205,8 @@ func ProcessStandardRouting(server PathesLogger) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		path := string(ctx.Path())
 
-		switch ctx.Method() {
-		case []byte("POST"):
+		switch string(ctx.Method()) {
+		case "POST":
 			body := ctx.PostBody()
 			if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
 				if (logFlag & FullLog) != 0 {
@@ -220,7 +220,7 @@ func ProcessStandardRouting(server PathesLogger) fasthttp.RequestHandler {
 			} else {
 				ctx.Error("Not found", fasthttp.StatusNotFound)
 			}
-		case []byte("GET"):
+		case "GET":
 			if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
 				logger.Printf("[GET %s %d][Request] %s\n", path, ctx.ID(), ctx.QueryArgs().QueryString())
 			}
