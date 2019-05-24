@@ -24,13 +24,17 @@ var (
 			return &fasthttp.Client{}
 		},
 	}
-	timings    = make(map[string]*median)
-	timingsReg = make(map[*regexp.Regexp]*median)
-	logger     = log.New(os.Stdout, "\n-----------------------------\n", log.LstdFlags)
+	timings      = make(map[string]*median)
+	timingsReg   = make(map[*regexp.Regexp]*median)
+	logger       = log.New(os.Stdout, "\n-----------------------------\n", log.LstdFlags)
+	pingResponse = []byte("OK")
 )
 
 func init() {
 	AddGetRoute("/internal/stats", handlerInternalStats)
+	AddGetRouteSimple("/internal/stats", handlerInternalStatsSimple)
+	AddGetRoute("/ping", ping)
+	AddGetRouteSimple("/ping", pingSimple)
 }
 
 type median struct {
@@ -256,4 +260,24 @@ func handlerInternalStats(ctx *fasthttp.RequestCtx, now time.Time, adds ...strin
 	for k, v := range timingsReg {
 		ctx.WriteString(fmt.Sprintf("%s: %s\n", k, v))
 	}
+}
+
+func handlerInternalStatsSimple(ctx *fasthttp.RequestCtx) {
+	for k, v := range timings {
+		ctx.WriteString(k)
+		ctx.WriteString(v.String())
+	}
+	for k, v := range timingsReg {
+		ctx.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+	}
+}
+
+func pingSimple(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("text/plain; charset=utf-8")
+	ctx.SetBody(pingResponse)
+}
+
+func ping(ctx *fasthttp.RequestCtx, now time.Time, adds ...string) {
+	ctx.SetContentType("text/plain; charset=utf-8")
+	ctx.SetBody(pingResponse)
 }

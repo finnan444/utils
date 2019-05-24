@@ -21,9 +21,21 @@ var result = new(healthResult)
 
 func init() {
 	tr.AddGetRoute("/health", health)
+	tr.AddGetRouteSimple("/health", healthSimple)
 }
 
 func health(ctx *fasthttp.RequestCtx, now time.Time, adds ...string) {
+	runtime.ReadMemStats(memStat)
+	result.HeapAlloc = memStat.HeapAlloc
+	result.HeapObjects = memStat.HeapObjects
+	result.LiveObjects = memStat.Mallocs - memStat.Frees
+	result.NumGoroutines = runtime.NumGoroutine()
+	bytes, _ := json.Marshal(result)
+	ctx.SetContentType(tr.ApplicationJSON)
+	ctx.SetBody(bytes)
+}
+
+func healthSimple(ctx *fasthttp.RequestCtx) {
 	runtime.ReadMemStats(memStat)
 	result.HeapAlloc = memStat.HeapAlloc
 	result.HeapObjects = memStat.HeapObjects
