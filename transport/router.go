@@ -74,10 +74,12 @@ func AddGetRoute(path string, handler RouterFunc) {
 
 func AddGetRouteSimple(path string, handler fasthttp.RequestHandler) {
 	getSimpleRoutes[path] = handler
+	timings["[GET] "+path] = &median{}
 }
 
 func AddPostRouteSimple(path string, handler fasthttp.RequestHandler) {
 	postSimpleRoutes[path] = handler
+	timings["[POST] "+path] = &median{}
 }
 
 // AddGetRegexpRoute adds get route. For example /accounts/([0-9]+)/suggest/.
@@ -197,9 +199,8 @@ func ProcessSimpleRouting() fasthttp.RequestHandler {
 	}
 }
 
-// ProcessStandardRouting работает с хендлерами, соотв стандартной сигнатуре fasthhtp
+// ProcessStandardRouting работает с хендлерами, соотв стандартной сигнатуре fasthttp
 // без regexp routes + обрабатывает только GET и POST
-// без статистики по таймингам
 // логи обрезаются только у POST запросов
 func ProcessStandardRouting(server PathesLogger) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
@@ -217,6 +218,7 @@ func ProcessStandardRouting(server PathesLogger) fasthttp.RequestHandler {
 			}
 			if handler, ok := postSimpleRoutes[path]; ok {
 				handler(ctx)
+				timings["[POST] "+path].Update(time.Since(ctx.Time()))
 			} else {
 				ctx.Error("Not found", fasthttp.StatusNotFound)
 			}
@@ -226,6 +228,7 @@ func ProcessStandardRouting(server PathesLogger) fasthttp.RequestHandler {
 			}
 			if handler, ok := getSimpleRoutes[path]; ok {
 				handler(ctx)
+				timings["[GET] "+path].Update(time.Since(ctx.Time()))
 			} else {
 				ctx.Error("Not found", fasthttp.StatusNotFound)
 			}
