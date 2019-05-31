@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,6 +34,8 @@ var (
 func init() {
 	AddGetRoute("/internal/stats", handlerInternalStats)
 	AddGetRouteSimple("/internal/stats", handlerInternalStatsSimple)
+	AddGetRoute("/internal/shutdown", shutdown)
+	AddGetRouteSimple("/internal/shutdown", shutdownSimple)
 	AddGetRoute("/ping", ping)
 	AddGetRouteSimple("/ping", pingSimple)
 }
@@ -253,23 +256,26 @@ func PutHTTPClient(client *fasthttp.Client) {
 }
 
 func handlerInternalStats(ctx *fasthttp.RequestCtx, now time.Time, adds ...string) {
+	var res strings.Builder
 	for k, v := range timings {
-		ctx.WriteString(k)
-		ctx.WriteString(v.String())
+		res.WriteString(fmt.Sprintf("%s: %s", k, v))
 	}
 	for k, v := range timingsReg {
-		ctx.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+		res.WriteString(fmt.Sprintf("%s: %s\n", k, v))
 	}
+	ctx.SetBodyString(res.String())
 }
 
 func handlerInternalStatsSimple(ctx *fasthttp.RequestCtx) {
+	var res strings.Builder
 	for k, v := range timings {
-		ctx.WriteString(k)
-		ctx.WriteString(v.String())
+		res.WriteString(fmt.Sprintf("%s: %s", k, v))
 	}
+
 	for k, v := range timingsReg {
-		ctx.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+		res.WriteString(fmt.Sprintf("%s: %s\n", k, v))
 	}
+	ctx.SetBodyString(res.String())
 }
 
 func pingSimple(ctx *fasthttp.RequestCtx) {
@@ -280,4 +286,12 @@ func pingSimple(ctx *fasthttp.RequestCtx) {
 func ping(ctx *fasthttp.RequestCtx, now time.Time, adds ...string) {
 	ctx.SetContentType("text/plain; charset=utf-8")
 	ctx.SetBody(pingResponse)
+}
+
+func shutdownSimple(ctx *fasthttp.RequestCtx) {
+	os.Exit(0)
+}
+
+func shutdown(ctx *fasthttp.RequestCtx, now time.Time, adds ...string) {
+	os.Exit(0)
 }
