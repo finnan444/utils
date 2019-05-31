@@ -35,7 +35,7 @@ func GetResponse() *response.BasicResponse {
 func Decode(ctx *fasthttp.RequestCtx, to interface{}) bool {
 	if err := json.Unmarshal(ctx.PostBody(), to); err != nil {
 		log.Printf("[%s] has decode error: %v", ctx.Path(), err)
-		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return false
 	}
 	return true
@@ -43,12 +43,12 @@ func Decode(ctx *fasthttp.RequestCtx, to interface{}) bool {
 
 // Authenticate do smth
 func Authenticate(request request.BasicRequester, response response.BasicResponser, secret string, server PathesLogger) bool {
-	hash := hashPool.Get().(hash.Hash)
-	io.WriteString(hash, strconv.Itoa(request.GetTime()))
-	io.WriteString(hash, secret)
-	var sign string = fmt.Sprintf("%x", hash.Sum(nil))
-	hash.Reset()
-	hashPool.Put(hash)
+	h := hashPool.Get().(hash.Hash)
+	io.WriteString(h, strconv.Itoa(request.GetTime()))
+	io.WriteString(h, secret)
+	var sign string = fmt.Sprintf("%x", h.Sum(nil))
+	h.Reset()
+	hashPool.Put(h)
 	if sign != request.GetSignature() {
 		response.SetError(SignatureMismatch, "Signature mismatched")
 		return false
@@ -58,13 +58,13 @@ func Authenticate(request request.BasicRequester, response response.BasicRespons
 
 // AuthenticateUser do smth
 func AuthenticateUser(request request.UserBasicRequester, response response.BasicResponser, secret string, server PathesLogger) bool {
-	hash := hashPool.Get().(hash.Hash)
-	io.WriteString(hash, request.GetUser())
-	io.WriteString(hash, secret)
-	io.WriteString(hash, strconv.Itoa(request.GetTime()))
-	sign := fmt.Sprintf("%x", hash.Sum(nil))
-	hash.Reset()
-	hashPool.Put(hash)
+	h := hashPool.Get().(hash.Hash)
+	io.WriteString(h, request.GetUser())
+	io.WriteString(h, secret)
+	io.WriteString(h, strconv.Itoa(request.GetTime()))
+	sign := fmt.Sprintf("%x", h.Sum(nil))
+	h.Reset()
+	hashPool.Put(h)
 	if sign != request.GetSignature() {
 		response.SetCode(SignatureMismatch)
 		response.SetMessage("Signature mismatched")
@@ -96,11 +96,11 @@ func SendResponse(ctx *fasthttp.RequestCtx, response pool.Reusable, startTime ti
 
 // GenerateRandom generates random string
 func GenerateRandom(salt string) string {
-	hash := hashPool.Get().(hash.Hash)
-	io.WriteString(hash, strconv.FormatInt(time.Now().UnixNano(), 10))
-	io.WriteString(hash, salt)
-	result := fmt.Sprintf("%x", hash.Sum(nil))
-	hash.Reset()
-	hashPool.Put(hash)
+	h := hashPool.Get().(hash.Hash)
+	io.WriteString(h, strconv.FormatInt(time.Now().UnixNano(), 10))
+	io.WriteString(h, salt)
+	result := fmt.Sprintf("%x", h.Sum(nil))
+	h.Reset()
+	hashPool.Put(h)
 	return result
 }

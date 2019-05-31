@@ -20,8 +20,8 @@ var memStat = new(runtime.MemStats)
 var result = new(healthResult)
 
 func init() {
-	tr.AddGetRoute("/health", health)
-	tr.AddGetRouteSimple("/health", healthSimple)
+	tr.AddGetRoute("/internal/health", health)
+	tr.AddGetRouteSimple("/internal/health", healthSimple)
 }
 
 func health(ctx *fasthttp.RequestCtx, now time.Time, adds ...string) {
