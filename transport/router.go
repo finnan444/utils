@@ -79,11 +79,13 @@ func AddGetRoute(path string, handler RouterFunc) {
 	timings["[GET] "+path] = &median{}
 }
 
+// AddGetRouteSimple dosmth
 func AddGetRouteSimple(path string, handler fasthttp.RequestHandler) {
 	getSimpleRoutes[path] = handler
 	timings["[GET] "+path] = &median{}
 }
 
+// AddPostRouteSimple dosmth
 func AddPostRouteSimple(path string, handler fasthttp.RequestHandler) {
 	postSimpleRoutes[path] = handler
 	timings["[POST] "+path] = &median{}

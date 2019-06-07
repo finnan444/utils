@@ -83,11 +83,11 @@ func getIntFromHex(hexValue string) *big.Int {
 func Initialize(c *Config, initLastBlocks func() map[string]uint64, bdr BlockDifferenceReporter) (SignMessageFunc, RecoverSignFunc, error) {
 	connectAddress := fmt.Sprintf("%s://%s:%d", c.Protocol, c.Host, c.Port)
 	client = ethrpc.NewEthRPC(connectAddress)
-	if version, err := client.Web3ClientVersion(); err != nil {
+	version, err := client.Web3ClientVersion()
+	if err != nil {
 		return nil, nil, err
-	} else {
-		log.Printf("Connected to RPC at: %s, version: %s", connectAddress, version)
 	}
+	log.Printf("Connected to RPC at: %s, version: %s", connectAddress, version)
 	client.Debug = c.Logging
 	abis = make(map[string]*abiWraper)
 	lastBlocks = initLastBlocks()
@@ -103,21 +103,23 @@ func Initialize(c *Config, initLastBlocks func() map[string]uint64, bdr BlockDif
 			return nil, nil, fmt.Errorf("[Ethereum] %s address is invalid", k)
 		}
 		wraper := &abiWraper{Address: v.Address, Events: map[string]string{}, AddressSlice: []string{v.Address}, EventTopics: map[string][][]string{}}
-		if abi, err := gabi.JSON(strings.NewReader(v.Abi)); err != nil {
+		abi, err := gabi.JSON(strings.NewReader(v.Abi))
+		if err != nil {
 			return nil, nil, fmt.Errorf("[Ethereum] error parsing abi definition %s", k)
-		} else {
-			wraper.Abi = &abi
-			for _, event := range v.Events {
-				if ev, ok := abi.Events[event]; ok {
-					eventAddress := ev.Id().Hex()
-					wraper.Events[event] = eventAddress
-					wraper.EventTopics[event] = [][]string{[]string{eventAddress}}
-				} else {
-					return nil, nil, fmt.Errorf("[Ethereum] no such event %s in abi definition %s", event, v.Abi)
-				}
-			}
-			abis[k] = wraper
 		}
+
+		wraper.Abi = &abi
+		for _, event := range v.Events {
+			if ev, ok := abi.Events[event]; ok {
+				eventAddress := ev.Id().Hex()
+				wraper.Events[event] = eventAddress
+				wraper.EventTopics[event] = [][]string{[]string{eventAddress}}
+			} else {
+				return nil, nil, fmt.Errorf("[Ethereum] no such event %s in abi definition %s", event, v.Abi)
+			}
+		}
+		abis[k] = wraper
+
 	}
 	go checkBlockDiff()
 	return signMessage, recoverSign, nil

@@ -18,9 +18,9 @@ type IntRedBlackTree struct {
 	root *intNode
 }
 
-func (t *IntRedBlackTree) isEmpty() bool {
-	return t.root == nil
-}
+//func (t *IntRedBlackTree) isEmpty() bool {
+//	return t.root == nil
+//}
 
 // Put add BattleData at a given key
 func (t *IntRedBlackTree) Put(key int, value int) {
@@ -131,7 +131,7 @@ func (t *IntRedBlackTree) isRed(x *intNode) bool {
 	if x == nil {
 		return false
 	}
-	return x.color == RED
+	return x.color
 }
 
 func (t *IntRedBlackTree) rotateLeft(x *intNode) *intNode {

@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"hash"
 	"io"
 	"log"
@@ -41,12 +42,40 @@ func Decode(ctx *fasthttp.RequestCtx, to interface{}) bool {
 	return true
 }
 
+// DecodeNew decodes request to object
+func DecodeNew(ctx *fasthttp.RequestCtx, to interface{}) (bool, error) {
+	body := ctx.PostBody()
+	err := json.Unmarshal(body, to)
+	if err != nil {
+		return false, err
+	}
+	return true, err
+}
+
+// EnsureStringFieldLogger проверяет что поле не пустое
+func EnsureStringFieldLogger(field, fieldName string, logger2 *logrus.Logger) bool {
+	if field == "" {
+		logger2.Warn(fmt.Sprintf("Missing request param(" + fieldName + ")"))
+		return false
+	}
+	return true
+}
+
+// EnsureIntegerFieldLogger проверяет что после декодинга поле не равно дефолтному значению int
+func EnsureIntegerFieldLogger(field int, fieldName string, logger2 *logrus.Logger) bool {
+	if field == 0 {
+		logger2.Warn(fmt.Sprintf("Missing request param(" + fieldName + ")"))
+		return false
+	}
+	return true
+}
+
 // Authenticate do smth
 func Authenticate(request request.BasicRequester, response response.BasicResponser, secret string, server PathesLogger) bool {
 	h := hashPool.Get().(hash.Hash)
 	io.WriteString(h, strconv.Itoa(request.GetTime()))
 	io.WriteString(h, secret)
-	var sign string = fmt.Sprintf("%x", h.Sum(nil))
+	var sign = fmt.Sprintf("%x", h.Sum(nil))
 	h.Reset()
 	hashPool.Put(h)
 	if sign != request.GetSignature() {

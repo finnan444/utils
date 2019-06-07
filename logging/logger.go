@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"github.com/sirupsen/logrus"
 	"io"
 	"log"
 	"os"
@@ -128,5 +129,20 @@ func GetLogger(name string, restartPeriod time.Duration, filenames ...string) (r
 	result = log.New(io.MultiWriter(writers...), "", log.LstdFlags)
 	customLoggers[name] = result
 	logLocker.Unlock()
+	return
+}
+
+//LogrusInit универсальный инициатор лога ошибок
+func LogrusInit(path string) (erL *logrus.Logger) {
+	erL = logrus.New()
+	erL.SetOutput(os.Stderr)
+	erL.SetFormatter(&logrus.JSONFormatter{})
+	erL.SetReportCaller(true)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err == nil {
+		erL.Out = file
+	} else {
+		erL.Info("Failed to log to file, using default stderr")
+	}
 	return
 }

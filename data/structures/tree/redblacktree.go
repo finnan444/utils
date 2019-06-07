@@ -7,11 +7,13 @@ import (
 	"github.com/finnan444/utils/data"
 )
 
+// global consts
 const (
 	RED   = true
 	BLACK = false
 )
 
+// NewRedBlackTree do smth
 func NewRedBlackTree() *RedBlackTree {
 	return &RedBlackTree{
 		pool: sync.Pool{
@@ -38,6 +40,7 @@ func (n *node) Reuse() {
 	n.color = BLACK
 }
 
+// RedBlackTree struct
 type RedBlackTree struct {
 	root *node
 	pool sync.Pool
@@ -47,6 +50,7 @@ func (t *RedBlackTree) isEmpty() bool {
 	return t.root == nil
 }
 
+// Put do smth
 func (t *RedBlackTree) Put(key data.Comparable, value interface{}) {
 	t.root = t.put(t.root, key, value)
 	t.root.color = BLACK
@@ -80,6 +84,7 @@ func (t *RedBlackTree) put(x *node, key data.Comparable, value interface{}) *nod
 	return x
 }
 
+// Get do smth
 func (t *RedBlackTree) Get(key data.Comparable) interface{} {
 	x := t.root
 	for x != nil {
@@ -95,10 +100,12 @@ func (t *RedBlackTree) Get(key data.Comparable) interface{} {
 	return nil
 }
 
+// Contains do smth
 func (t *RedBlackTree) Contains(key data.Comparable) bool {
 	return t.Get(key) != nil
 }
 
+// Delete do smth
 func (t *RedBlackTree) Delete(key data.Comparable) {
 	if t.isEmpty() || !t.Contains(key) {
 		return
@@ -143,6 +150,7 @@ func (t *RedBlackTree) deleteKey(x *node, key data.Comparable) *node {
 	return t.balance(x)
 }
 
+// DeleteMin do smth
 func (t *RedBlackTree) DeleteMin() {
 	if t.isEmpty() {
 		return
@@ -169,6 +177,7 @@ func (t *RedBlackTree) deleteMin(x *node) *node {
 	return t.balance(x)
 }
 
+// DeleteMax do smth
 func (t *RedBlackTree) DeleteMax() {
 	if t.isEmpty() {
 		return
@@ -198,6 +207,7 @@ func (t *RedBlackTree) deleteMax(x *node) *node {
 	return t.balance(x)
 }
 
+// Floor do smth
 func (t *RedBlackTree) Floor(key data.Comparable) interface{} {
 	node := t.floor(t.root, key)
 	if node != nil {
@@ -224,6 +234,7 @@ func (t *RedBlackTree) floor(x *node, key data.Comparable) *node {
 	return temp
 }
 
+// Ceil do smth
 func (t *RedBlackTree) Ceil(key data.Comparable) interface{} {
 	node := t.ceil(t.root, key)
 	if node != nil {
@@ -254,7 +265,7 @@ func (t *RedBlackTree) isRed(x *node) bool {
 	if x == nil {
 		return false
 	}
-	return x.color == RED
+	return x.color
 }
 
 func (t *RedBlackTree) rotateLeft(x *node) *node {
@@ -333,8 +344,8 @@ func (t *RedBlackTree) String() string {
 	return str
 }
 
-func (node *node) String() string {
-	return fmt.Sprintf("%v", node.key)
+func (n *node) String() string {
+	return fmt.Sprintf("%v", n.key)
 }
 
 func output(node *node, prefix string, isTail bool, str *string) {

@@ -16,6 +16,7 @@ require (
 	github.com/lib/pq v1.1.1 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/onrik/ethrpc v0.0.0-20190305112807-6b8e9c0e9a8f
+	github.com/sirupsen/logrus v1.2.0
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/tidwall/gjson v1.2.1 // indirect
 	github.com/tidwall/match v1.0.1 // indirect
