@@ -43,13 +43,13 @@ func Decode(ctx *fasthttp.RequestCtx, to interface{}) bool {
 }
 
 // DecodeNew decodes request to object
-func DecodeNew(ctx *fasthttp.RequestCtx, to interface{}) (bool, error) {
+func DecodeNew(ctx *fasthttp.RequestCtx, to interface{}) error {
 	body := ctx.PostBody()
 	err := json.Unmarshal(body, to)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return true, err
+	return nil
 }
 
 // EnsureStringFieldLogger проверяет что поле не пустое
