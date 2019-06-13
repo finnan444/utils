@@ -42,11 +42,13 @@ func Decode(ctx *fasthttp.RequestCtx, to interface{}) bool {
 	return true
 }
 
-// DecodeNew decodes request to object
-func DecodeNew(ctx *fasthttp.RequestCtx, to interface{}) error {
-	body := ctx.PostBody()
-	err := json.Unmarshal(body, to)
-	if err != nil {
+// DecodeNew decodes request body (which is json) to the given object
+// on error sets logs error and sets status code 400
+func DecodeJSONBody(ctx *fasthttp.RequestCtx, to interface{}, logger2 *logrus.Logger) error {
+	body := ctx.Request.Body()
+	if err := json.Unmarshal(body, to); err != nil {
+		logger2.WithFields(logrus.Fields{"error": err, "body": string(body)}).Warn("request decode error")
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return err
 	}
 	return nil
@@ -132,4 +134,9 @@ func GenerateRandom(salt string) string {
 	h.Reset()
 	hashPool.Put(h)
 	return result
+}
+
+// AuthenticateByTokenSimple простая авторизация по токену
+func AuthenticateByTokenSimple(token, tokenControl string) bool {
+	return token != "" && token == tokenControl
 }
