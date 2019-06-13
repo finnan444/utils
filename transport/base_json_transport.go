@@ -8,6 +8,7 @@ import (
 	"hash"
 	"io"
 	"log"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -43,11 +44,10 @@ func Decode(ctx *fasthttp.RequestCtx, to interface{}) bool {
 }
 
 // DecodeNew decodes request body (which is json) to the given object
-// on error sets logs error and sets status code 400
-func DecodeJSONBody(ctx *fasthttp.RequestCtx, to interface{}, logger2 *logrus.Logger) error {
+// on error sets status code 400
+func DecodeJSONBody(ctx *fasthttp.RequestCtx, to interface{}) error {
 	body := ctx.Request.Body()
 	if err := json.Unmarshal(body, to); err != nil {
-		logger2.WithFields(logrus.Fields{"error": err, "body": string(body)}).Warn("request decode error")
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return err
 	}
@@ -57,7 +57,7 @@ func DecodeJSONBody(ctx *fasthttp.RequestCtx, to interface{}, logger2 *logrus.Lo
 // EnsureStringFieldLogger проверяет что поле не пустое
 func EnsureStringFieldLogger(field, fieldName string, logger2 *logrus.Logger) bool {
 	if field == "" {
-		logger2.Warn(fmt.Sprintf("Missing request param(" + fieldName + ")"))
+		logger2.WithField("stack", string(debug.Stack())).Warn(fmt.Sprintf("Missing request param(%s)", fieldName))
 		return false
 	}
 	return true
@@ -66,7 +66,7 @@ func EnsureStringFieldLogger(field, fieldName string, logger2 *logrus.Logger) bo
 // EnsureIntegerFieldLogger проверяет что после декодинга поле не равно дефолтному значению int
 func EnsureIntegerFieldLogger(field int, fieldName string, logger2 *logrus.Logger) bool {
 	if field == 0 {
-		logger2.Warn(fmt.Sprintf("Missing request param(" + fieldName + ")"))
+		logger2.WithField("stack", string(debug.Stack())).Warn(fmt.Sprintf("Missing request param(%s)", fieldName))
 		return false
 	}
 	return true
