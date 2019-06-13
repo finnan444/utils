@@ -136,7 +136,12 @@ func GenerateRandom(salt string) string {
 	return result
 }
 
-// AuthenticateByTokenSimple простая авторизация по токену
-func AuthenticateByTokenSimple(token, tokenControl string) bool {
-	return token != "" && token == tokenControl
+// AuthenticateByTokenSimple простая авторизация по токену, если не прошла, устанавливает статус 401
+func AuthenticateByToken(ctx *fasthttp.RequestCtx, token, tokenControl string) bool {
+	if token != "" && token == tokenControl {
+		return true
+	} else {
+		ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+		return false
+	}
 }
