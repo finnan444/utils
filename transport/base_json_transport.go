@@ -4,7 +4,6 @@ import (
 	"crypto"
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"hash"
 	"io"
 	"log"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/finnan444/utils/math/ints"
 	"github.com/finnan444/utils/pool"
@@ -140,8 +141,7 @@ func GenerateRandom(salt string) string {
 func AuthenticateByToken(ctx *fasthttp.RequestCtx, token, tokenControl string) bool {
 	if token != "" && token == tokenControl {
 		return true
-	} else {
-		ctx.SetStatusCode(fasthttp.StatusUnauthorized)
-		return false
 	}
+	ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+	return false
 }

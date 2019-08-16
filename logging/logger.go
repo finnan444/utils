@@ -1,12 +1,13 @@
 package logging
 
 import (
-	"github.com/sirupsen/logrus"
 	"io"
 	"log"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/finnan444/utils/time/cron"
 )
@@ -65,7 +66,7 @@ func (w *rotater) Rotate() (err error) {
 }
 
 func (w *rotater) rotate() {
-	w.Rotate()
+	_ = w.Rotate()
 }
 
 func newRotater(filename string, period time.Duration) *rotater {
@@ -115,7 +116,7 @@ func GetLogger(name string, restartPeriod time.Duration, filenames ...string) (r
 		return
 	}
 	logLocker.RUnlock()
-	var writers []io.Writer
+	writers := make([]io.Writer, 0, len(filenames)+1)
 	writers = append(writers, os.Stdout)
 	var file *rotater
 	logLocker.Lock()

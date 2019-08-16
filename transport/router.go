@@ -173,7 +173,8 @@ func ProcessSimpleRouting() fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		now := time.Now()
 		path := string(ctx.Path())
-		if ctx.IsPost() {
+		switch string(ctx.Method()) {
+		case fasthttp.MethodPost:
 			if handler, ok := postRoutes[path]; ok {
 				handler(ctx, now)
 				timings["[POST] "+path].Update(time.Since(now))
@@ -187,7 +188,7 @@ func ProcessSimpleRouting() fasthttp.RequestHandler {
 				}
 				ctx.Error("Not found", fasthttp.StatusNotFound)
 			}
-		} else if ctx.IsGet() {
+		case fasthttp.MethodGet:
 			if handler, ok := getRoutes[path]; ok {
 				handler(ctx, now)
 				timings["[GET] "+path].Update(time.Since(now))
@@ -202,7 +203,7 @@ func ProcessSimpleRouting() fasthttp.RequestHandler {
 				}
 				ctx.Error("Not found", fasthttp.StatusNotFound)
 			}
-		} else {
+		default:
 			ctx.Error("Not found", fasthttp.StatusNotFound)
 		}
 	}

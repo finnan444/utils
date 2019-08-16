@@ -1,0 +1,34 @@
+linters:
+  enable-all: true
+  disable:
+    - lll
+    - gochecknoinits # в каких-то пакетах от init наверно и вправду стоит избаляться
+    - gochecknoglobals # а как без них)
+  disable-all: false
+  fast: false
+linters-settings:
+  errcheck:
+    check-type-assertions: false # по хорошему приведения типов тоже проверять надо
+    check-blank: false
+  govet:
+    check-shadowing: true
+  gocyclo:
+    min-complexity: 10
+  maligned:
+    # print struct with more effective memory layout or not, false by default
+    suggest-new: true
+  dupl:
+    # tokens count to trigger issue, 150 by default
+    threshold: 100
+  prealloc:
+    # XXX: we don't recommend using this linter before doing performance profiling.
+    # For most programs usage of prealloc will be a premature optimization.
+
+    # Report preallocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them.
+    # True by default.
+    simple: true
+    range-loops: true
+    for-loops: false
+  goconst:
+    min-len: 2
+    min-occurrences: 2

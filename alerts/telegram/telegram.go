@@ -88,7 +88,7 @@ func (mngr *Alert) makeRequest(chatID string, text string, client *fasthttp.Clie
 	defer fasthttp.ReleaseRequest(req)
 
 	req.SetRequestURI(mngr.botURL + pathSendMessage)
-	req.Header.SetMethod(transport.Post)
+	req.Header.SetMethod(fasthttp.MethodPost)
 	req.Header.SetContentType(transport.ApplicationJSON)
 	reqBody := map[string]string{
 		"chat_id":    chatID,
@@ -150,7 +150,7 @@ func (mngr *Alert) setWebhook(url string) {
 	client := transport.GetHTTPClient()
 	req := fasthttp.AcquireRequest()
 	req.SetRequestURI(mngr.botURL + pathSetWebhook)
-	req.Header.SetMethod(transport.Post)
+	req.Header.SetMethod(fasthttp.MethodPost)
 	req.Header.SetContentType(transport.ApplicationJSON)
 	reqBody := map[string]interface{}{
 		"url":             url,

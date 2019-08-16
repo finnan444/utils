@@ -15,3 +15,9 @@ type RequestInfo struct {
 	BodyOrigin    *string `json:"body_origin,omitempty"`
 	URIOrigin     *string `json:"uri_origin,omitempty"`
 }
+
+// KernelBaseRequest базовая сигнатура запросов между сервисами
+type KernelBaseRequest struct {
+	Token   string      `json:"token"`
+	Payload interface{} `json:"payload"`
+}

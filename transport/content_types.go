@@ -8,11 +8,3 @@ const (
 	ApplicationXML         = "application/xml"
 	TextPlain              = "text/plain"
 )
-
-// Methods
-const (
-	Get  = "GET"
-	Head = "HEAD"
-	Post = "POST"
-	Put  = "PUT"
-)
