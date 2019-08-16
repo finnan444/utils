@@ -1,5 +1,7 @@
 package transport
 
+import "sync"
+
 // UTM универсальная структура для хранения utm-меток
 type UTM struct {
 	UtmSource   *string `json:"utm_source,omitempty"`
@@ -20,4 +22,16 @@ type RequestInfo struct {
 type KernelBaseRequest struct {
 	Token   string      `json:"token"`
 	Payload interface{} `json:"payload"`
+}
+
+var requestPool = sync.Pool{New: func() interface{} { return &KernelBaseRequest{} }}
+
+func (s *KernelBaseRequest) Reuse() {
+	s.Token, s.Payload = "", nil
+	requestPool.Put(s)
+}
+
+// GetKernelBaseReq берет из пула стандартный запрос
+func GetKernelBaseReq() *KernelBaseRequest {
+	return requestPool.Get().(*KernelBaseRequest)
 }
