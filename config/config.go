@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 )
 
-const prodMode = "prod"
+// продакшн режим, в докер как env variable пробрасываем
+const ProdMode = "prod"
 
 // LoadConfiguration универсальный загрузчик конфы
 func LoadConfiguration(mode string, config interface{}) (err error) {
@@ -17,7 +18,7 @@ func LoadConfiguration(mode string, config interface{}) (err error) {
 		file    *os.File
 	)
 
-	if mode == prodMode {
+	if mode == ProdMode {
 		name = "conf_prod.json"
 	}
 
