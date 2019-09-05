@@ -3,6 +3,7 @@ package transport
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -234,7 +235,14 @@ func ProcessStandardRouting(server PathesLogger) fasthttp.RequestHandler {
 			}
 		case "GET":
 			if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
-				logger.Printf("[GET %s %d][Request] %s\n", path, ctx.ID(), ctx.QueryArgs().QueryString())
+				var (
+					queryString string
+					err         error
+				)
+				if queryString, err = url.QueryUnescape(string(ctx.QueryArgs().QueryString())); err != nil {
+					queryString = string(ctx.QueryArgs().QueryString())
+				}
+				logger.Printf("[GET %s %d][Request] %s\n", path, ctx.ID(), queryString)
 			}
 			if handler, ok := getSimpleRoutes[path]; ok {
 				handler(ctx)
