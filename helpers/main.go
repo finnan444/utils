@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/finnan444/utils/transport/response"
 	"strconv"
 	"time"
+
+	"github.com/finnan444/utils/transport/response"
 
 	"github.com/finnan444/utils/transport"
 	"github.com/sirupsen/logrus"
@@ -72,7 +73,7 @@ func PreCheckNew(requestBody []byte, req *transport.KernelBaseRequest, token str
 	if err := json.Unmarshal(requestBody, reqBody); err != nil {
 		resp.Msg = "body not json"
 		resp.Code = fasthttp.StatusBadRequest
-		resp.Payload = logrus.Fields{"error": err, "body": string(ctx.Request.Body())}
+		resp.Payload = logrus.Fields{"error": err, "body": string(requestBody)}
 		return resp
 	}
 
