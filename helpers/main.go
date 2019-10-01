@@ -66,32 +66,29 @@ func PreCheck(ctx *fasthttp.RequestCtx, req *transport.KernelBaseRequest, logger
 }
 
 // PreCheckNew немного доработанная версия без
-func PreCheckNew(requestBody []byte, req *transport.KernelBaseRequest, token string) *response.BasicResponse {
+func PreCheckNew(requestBody []byte, req *transport.KernelBaseRequest, token string) (*response.BasicResponse, logrus.Fields) {
 	resp := transport.GetResponse()
 
 	reqBody := &logrus.Fields{}
 	if err := json.Unmarshal(requestBody, reqBody); err != nil {
 		resp.Msg = "body not json"
 		resp.Code = fasthttp.StatusBadRequest
-		resp.Payload = logrus.Fields{"error": err, "body": string(requestBody)}
-		return resp
+		return resp, logrus.Fields{"error": err, "body": string(requestBody)}
 	}
 
 	if err := transport.DecodeJSONBodyNew(requestBody, req); err != nil {
 		resp.Msg = "request decode error"
 		resp.Code = fasthttp.StatusBadRequest
-		resp.Payload = logrus.Fields{"error": err, "body": reqBody}
-		return resp
+		return resp, logrus.Fields{"error": err, "body": reqBody}
 	}
 
 	if !transport.AuthenticateByTokenNew(req.Token, token) {
 		resp.Msg = "unauthorized request"
 		resp.Code = fasthttp.StatusUnauthorized
-		resp.Payload = logrus.Fields{"body": reqBody}
-		return resp
+		return resp, logrus.Fields{"error": errors.New("unauthorized request"), "body": reqBody}
 	}
 
-	return resp
+	return resp, nil
 }
 
 // Elapsed можно вызывать в начале ф-ции defer Elapsed("functionName")
