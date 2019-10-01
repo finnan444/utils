@@ -3,7 +3,10 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/finnan444/utils/pool"
 	"strconv"
+	"time"
 
 	"github.com/finnan444/utils/transport"
 	"github.com/sirupsen/logrus"
@@ -59,4 +62,41 @@ func PreCheck(ctx *fasthttp.RequestCtx, req *transport.KernelBaseRequest, logger
 	}
 
 	return true
+}
+
+// PreCheckNew
+func PreCheckNew(ctx *fasthttp.RequestCtx, req *transport.KernelBaseRequest, logger2 *logrus.Logger, token string) pool.Reusable {
+	response := transport.GetResponse()
+
+	reqBody := &logrus.Fields{}
+	if err := json.Unmarshal(ctx.Request.Body(), reqBody); err != nil {
+		response.Msg = "body not json"
+		response.Code = fasthttp.StatusBadRequest
+		response.Payload = logrus.Fields{"error": err, "body": string(ctx.Request.Body())}
+		return response
+	}
+
+	if err := transport.DecodeJSONBody(ctx, req); err != nil {
+		response.Msg = "request decode error"
+		response.Code = fasthttp.StatusBadRequest
+		response.Payload = logrus.Fields{"error": err, "body": reqBody}
+		return response
+	}
+
+	if !transport.AuthenticateByTokenNew(req.Token, token) {
+		response.Msg = "unauthorized request"
+		response.Code = fasthttp.StatusUnauthorized
+		response.Payload = logrus.Fields{"body": reqBody}
+		return response
+	}
+
+	return response
+}
+
+// Elapsed можно вызывать в начале ф-ции defer Elapsed("functionName")
+func Elapsed(what string) func() {
+	start := time.Now()
+	return func() {
+		fmt.Printf("%s took %v\n", what, time.Since(start))
+	}
 }

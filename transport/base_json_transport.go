@@ -126,6 +126,27 @@ func SendResponse(ctx *fasthttp.RequestCtx, response pool.Reusable, startTime ti
 	}
 }
 
+// SendResponseNew пишет в Body ответ в стандартной структуре
+func SendResponseNew(ctx *fasthttp.RequestCtx, response pool.Reusable, server PathesLogger) {
+	js, err := json.Marshal(response)
+	response.Reuse()
+	if err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+	ctx.SetContentType(ApplicationJSONUTF8)
+	ctx.SetBody(js)
+	path := string(ctx.Path())
+	reqID := ctx.ID()
+	if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
+		if (logFlag & FullLog) != 0 {
+			logger.Printf("[%s %s %d] %s\n", ctx.Method(), path, reqID, js)
+		} else {
+			logger.Printf("[%s %s %d] %s\n", ctx.Method(), path, reqID, js[:ints.MinInt(len(js), 255)])
+		}
+	}
+}
+
 // GenerateRandom generates random string
 func GenerateRandom(salt string) string {
 	h := hashPool.Get().(hash.Hash)
@@ -137,11 +158,16 @@ func GenerateRandom(salt string) string {
 	return result
 }
 
-// AuthenticateByTokenSimple простая авторизация по токену, если не прошла, устанавливает статус 401
+// AuthenticateByToken простая авторизация по токену, если не прошла, устанавливает статус 401
 func AuthenticateByToken(ctx *fasthttp.RequestCtx, token, tokenControl string) bool {
 	if token != "" && token == tokenControl {
 		return true
 	}
 	ctx.SetStatusCode(fasthttp.StatusUnauthorized)
 	return false
+}
+
+// AuthenticateByTokenNew простая авторизация по токену, если не прошла, устанавливает статус 401
+func AuthenticateByTokenNew(token, tokenControl string) bool {
+	return token != "" && token == tokenControl
 }
