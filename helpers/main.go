@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/finnan444/utils/pool"
+	"github.com/finnan444/utils/transport/response"
 	"strconv"
 	"time"
 
@@ -64,33 +64,33 @@ func PreCheck(ctx *fasthttp.RequestCtx, req *transport.KernelBaseRequest, logger
 	return true
 }
 
-// PreCheckNew
-func PreCheckNew(ctx *fasthttp.RequestCtx, req *transport.KernelBaseRequest, logger2 *logrus.Logger, token string) pool.Reusable {
-	response := transport.GetResponse()
+// PreCheckNew немного доработанная версия без
+func PreCheckNew(requestBody []byte, req *transport.KernelBaseRequest, token string) *response.BasicResponse {
+	resp := transport.GetResponse()
 
 	reqBody := &logrus.Fields{}
-	if err := json.Unmarshal(ctx.Request.Body(), reqBody); err != nil {
-		response.Msg = "body not json"
-		response.Code = fasthttp.StatusBadRequest
-		response.Payload = logrus.Fields{"error": err, "body": string(ctx.Request.Body())}
-		return response
+	if err := json.Unmarshal(requestBody, reqBody); err != nil {
+		resp.Msg = "body not json"
+		resp.Code = fasthttp.StatusBadRequest
+		resp.Payload = logrus.Fields{"error": err, "body": string(ctx.Request.Body())}
+		return resp
 	}
 
-	if err := transport.DecodeJSONBody(ctx, req); err != nil {
-		response.Msg = "request decode error"
-		response.Code = fasthttp.StatusBadRequest
-		response.Payload = logrus.Fields{"error": err, "body": reqBody}
-		return response
+	if err := transport.DecodeJSONBodyNew(requestBody, req); err != nil {
+		resp.Msg = "request decode error"
+		resp.Code = fasthttp.StatusBadRequest
+		resp.Payload = logrus.Fields{"error": err, "body": reqBody}
+		return resp
 	}
 
 	if !transport.AuthenticateByTokenNew(req.Token, token) {
-		response.Msg = "unauthorized request"
-		response.Code = fasthttp.StatusUnauthorized
-		response.Payload = logrus.Fields{"body": reqBody}
-		return response
+		resp.Msg = "unauthorized request"
+		resp.Code = fasthttp.StatusUnauthorized
+		resp.Payload = logrus.Fields{"body": reqBody}
+		return resp
 	}
 
-	return response
+	return resp
 }
 
 // Elapsed можно вызывать в начале ф-ции defer Elapsed("functionName")

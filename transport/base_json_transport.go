@@ -44,7 +44,7 @@ func Decode(ctx *fasthttp.RequestCtx, to interface{}) bool {
 	return true
 }
 
-// DecodeNew decodes request body (which is json) to the given object
+// DecodeJSONBody decodes request body (which is json) to the given object
 // on error sets status code 400
 func DecodeJSONBody(ctx *fasthttp.RequestCtx, to interface{}) error {
 	body := ctx.Request.Body()
@@ -53,6 +53,11 @@ func DecodeJSONBody(ctx *fasthttp.RequestCtx, to interface{}) error {
 		return err
 	}
 	return nil
+}
+
+// DecodeJSONBodyNew
+func DecodeJSONBodyNew(requestBody []byte, to interface{}) error {
+	return json.Unmarshal(requestBody, to)
 }
 
 // EnsureStringFieldLogger проверяет что поле не пустое
