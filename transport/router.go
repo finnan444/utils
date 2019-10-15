@@ -48,12 +48,15 @@ type median struct {
 
 func (m *median) Update(d time.Duration) {
 	m.Lock()
+
 	if m.Min == 0 || m.Min > d {
 		m.Min = d
 	}
+
 	if m.Max < d {
 		m.Max = d
 	}
+
 	m.Total += d
 	m.Count++
 	m.Unlock()
@@ -63,6 +66,7 @@ func (m *median) String() string {
 	if m.Count > 0 {
 		return fmt.Sprintf(": {\"min\":%v, \"max\":%v, \"med\":%v}\n", m.Min, m.Max, m.Total/m.Count)
 	}
+
 	return ": Not enough stats\n"
 }
 
@@ -123,7 +127,8 @@ func ProcessRouting(server PathesLogger) fasthttp.RequestHandler {
 		now := time.Now()
 		path := string(ctx.Path())
 		reqID := ctx.ID()
-		if ctx.IsPost() {
+		switch string(ctx.Method()) {
+		case fasthttp.MethodPost:
 			body := ctx.PostBody()
 			if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
 				if (logFlag & FullLog) != 0 {
@@ -145,7 +150,7 @@ func ProcessRouting(server PathesLogger) fasthttp.RequestHandler {
 				}
 				ctx.Error("Not found", fasthttp.StatusNotFound)
 			}
-		} else if ctx.IsGet() {
+		case fasthttp.MethodGet:
 			if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
 				logger.Printf("[GET %s %d][Request] %s\n", path, reqID, ctx.QueryArgs().QueryString())
 			}
@@ -163,7 +168,7 @@ func ProcessRouting(server PathesLogger) fasthttp.RequestHandler {
 				}
 				ctx.Error("Not found", fasthttp.StatusNotFound)
 			}
-		} else {
+		default:
 			ctx.Error("Not found", fasthttp.StatusNotFound)
 		}
 	}
@@ -268,9 +273,11 @@ func PutHTTPClient(client *fasthttp.Client) {
 
 func handlerInternalStats(ctx *fasthttp.RequestCtx, now time.Time, adds ...string) {
 	var res strings.Builder
+
 	for k, v := range timings {
 		res.WriteString(fmt.Sprintf("%s: %s", k, v))
 	}
+
 	for k, v := range timingsReg {
 		res.WriteString(fmt.Sprintf("%s: %s\n", k, v))
 	}
@@ -279,6 +286,7 @@ func handlerInternalStats(ctx *fasthttp.RequestCtx, now time.Time, adds ...strin
 
 func handlerInternalStatsSimple(ctx *fasthttp.RequestCtx) {
 	var res strings.Builder
+
 	for k, v := range timings {
 		res.WriteString(fmt.Sprintf("%s: %s", k, v))
 	}

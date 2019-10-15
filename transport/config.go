@@ -36,23 +36,30 @@ type PathesLogger interface {
 // GetLogFlag returns LogFlag
 func (srv *LogPathes) GetLogFlag(path string) (result LogFlag) {
 	var ok bool
+
 	srv.RLock()
+
 	if srv.FullLogPathes != nil {
 		result, ok = srv.FullLogPathes[path]
 	}
+
 	srv.RUnlock()
+
 	if !ok {
 		result = ToLog
 	}
+
 	return result
 }
 
 // SetLogFlag changes log level for path
 func (srv *LogPathes) SetLogFlag(path string, flag LogFlag) {
 	srv.Lock()
+
 	if srv.FullLogPathes == nil {
 		srv.FullLogPathes = make(map[string]LogFlag)
 	}
+
 	srv.FullLogPathes[path] = flag
 	srv.Unlock()
 }

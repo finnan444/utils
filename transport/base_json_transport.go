@@ -3,6 +3,7 @@ package transport
 import (
 	"crypto"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -39,8 +40,10 @@ func Decode(ctx *fasthttp.RequestCtx, to interface{}) bool {
 	if err := json.Unmarshal(ctx.PostBody(), to); err != nil {
 		log.Printf("[%s] has decode error: %v", ctx.Path(), err)
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+
 		return false
 	}
+
 	return true
 }
 
@@ -52,6 +55,7 @@ func DecodeJSONBody(ctx *fasthttp.RequestCtx, to interface{}) error {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return err
 	}
+
 	return nil
 }
 
@@ -66,6 +70,7 @@ func EnsureStringFieldLogger(field, fieldName string, logger2 *logrus.Logger) bo
 		logger2.WithField("stack", string(debug.Stack())).Warn(fmt.Sprintf("Missing request param(%s)", fieldName))
 		return false
 	}
+
 	return true
 }
 
@@ -75,53 +80,67 @@ func EnsureIntegerFieldLogger(field int, fieldName string, logger2 *logrus.Logge
 		logger2.WithField("stack", string(debug.Stack())).Warn(fmt.Sprintf("Missing request param(%s)", fieldName))
 		return false
 	}
+
 	return true
 }
 
 // Authenticate do smth
 func Authenticate(request request.BasicRequester, response response.BasicResponser, secret string, server PathesLogger) bool {
 	h := hashPool.Get().(hash.Hash)
-	io.WriteString(h, strconv.Itoa(request.GetTime()))
-	io.WriteString(h, secret)
+
+	_, _ = io.WriteString(h, strconv.Itoa(request.GetTime()))
+	_, _ = io.WriteString(h, secret)
+
 	var sign = fmt.Sprintf("%x", h.Sum(nil))
+
 	h.Reset()
 	hashPool.Put(h)
+
 	if sign != request.GetSignature() {
 		response.SetError(SignatureMismatch, "Signature mismatched")
 		return false
 	}
+
 	return true
 }
 
 // AuthenticateUser do smth
 func AuthenticateUser(request request.UserBasicRequester, response response.BasicResponser, secret string, server PathesLogger) bool {
 	h := hashPool.Get().(hash.Hash)
-	io.WriteString(h, request.GetUser())
-	io.WriteString(h, secret)
-	io.WriteString(h, strconv.Itoa(request.GetTime()))
+	_, _ = io.WriteString(h, request.GetUser())
+	_, _ = io.WriteString(h, secret)
+	_, _ = io.WriteString(h, strconv.Itoa(request.GetTime()))
+
 	sign := fmt.Sprintf("%x", h.Sum(nil))
+
 	h.Reset()
 	hashPool.Put(h)
+
 	if sign != request.GetSignature() {
 		response.SetCode(SignatureMismatch)
 		response.SetMessage("Signature mismatched")
+
 		return false
 	}
+
 	return true
 }
 
 // SendResponse do smth
 func SendResponse(ctx *fasthttp.RequestCtx, response pool.Reusable, startTime time.Time, server PathesLogger) {
+	defer response.Reuse()
+
 	js, err := json.Marshal(response)
-	response.Reuse()
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 	ctx.SetContentType(ApplicationJSONUTF8)
 	ctx.SetBody(js)
+
 	path := string(ctx.Path())
 	reqID := ctx.ID()
+
 	if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
 		if (logFlag & FullLog) != 0 {
 			logger.Printf("[%s %s %d][Response %s] %s\n", ctx.Method(), path, reqID, time.Since(startTime), js)
@@ -133,16 +152,19 @@ func SendResponse(ctx *fasthttp.RequestCtx, response pool.Reusable, startTime ti
 
 // SendResponseNew пишет в Body ответ в стандартной структуре
 func SendResponseNew(ctx *fasthttp.RequestCtx, response pool.Reusable, server PathesLogger) {
+	defer response.Reuse()
+
 	js, err := json.Marshal(response)
-	response.Reuse()
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 	ctx.SetContentType(ApplicationJSONUTF8)
 	ctx.SetBody(js)
+
 	path := string(ctx.Path())
 	reqID := ctx.ID()
+
 	if logFlag := server.GetLogFlag(path); (logFlag & ToLog) != 0 {
 		if (logFlag & FullLog) != 0 {
 			logger.Printf("[%s %s %d] %s\n", ctx.Method(), path, reqID, js)
@@ -155,11 +177,15 @@ func SendResponseNew(ctx *fasthttp.RequestCtx, response pool.Reusable, server Pa
 // GenerateRandom generates random string
 func GenerateRandom(salt string) string {
 	h := hashPool.Get().(hash.Hash)
-	io.WriteString(h, strconv.FormatInt(time.Now().UnixNano(), 10))
-	io.WriteString(h, salt)
+
+	_, _ = io.WriteString(h, strconv.FormatInt(time.Now().UnixNano(), 10))
+	_, _ = io.WriteString(h, salt)
+
 	result := fmt.Sprintf("%x", h.Sum(nil))
+
 	h.Reset()
 	hashPool.Put(h)
+
 	return result
 }
 
@@ -168,11 +194,17 @@ func AuthenticateByToken(ctx *fasthttp.RequestCtx, token, tokenControl string) b
 	if token != "" && token == tokenControl {
 		return true
 	}
+
 	ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+
 	return false
 }
 
 // AuthenticateByTokenNew простая авторизация по токену, если не прошла, устанавливает статус 401
-func AuthenticateByTokenNew(token, tokenControl string) bool {
-	return token != "" && token == tokenControl
+func AuthenticateByTokenNew(token, tokenControl string) error {
+	if token != "" && token == tokenControl {
+		return nil
+	}
+
+	return errors.New("unauthorized request")
 }

@@ -4,6 +4,7 @@ linters:
     - lll
     - gochecknoinits # в каких-то пакетах от init наверно и вправду стоит избаляться
     - gochecknoglobals # а как без них)
+    - godox
   disable-all: false
   fast: false
 linters-settings:
@@ -13,7 +14,7 @@ linters-settings:
   govet:
     check-shadowing: true
   gocyclo:
-    min-complexity: 10
+    min-complexity: 15
   maligned:
     # print struct with more effective memory layout or not, false by default
     suggest-new: true
