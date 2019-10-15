@@ -17,6 +17,7 @@ import (
 )
 
 // SplitPhoneNumber парсит номер, дефолтная локаль - Россия
+// Deprecated: use SplitPhoneNumberNew - more functionality
 func SplitPhoneNumber(p *string) (code, phone string, err error) {
 	var cc, nn string
 
@@ -40,28 +41,26 @@ func SplitPhoneNumber(p *string) (code, phone string, err error) {
 	return strconv.Itoa(int(*num.CountryCode)), strconv.Itoa(int(*num.NationalNumber)), nil
 }
 
-func SplitPhoneNumberNew(p *string) *phonenumbers.PhoneNumber {
+func SplitPhoneNumberNew(p *string) (*phonenumbers.PhoneNumber, error) {
 	if p == nil {
-		return nil
+		return nil, errors.New("input phone is nil")
 	}
 
 	num, err := phonenumbers.Parse(*p, "RU")
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	if num.CountryCode == nil {
-		return nil
+		return nil, errors.New("country code is null")
 	}
 
 	if num.NationalNumber == nil {
-		return nil
+		return nil, errors.New("national number is null")
 	}
 
-	return num
+	return num, nil
 }
-
-//todo метод, возвращающий E164
 
 // PreCheck проверяет что запрос корректный с точки зрения структуры KernelBaseRequest и сверяет токен
 func PreCheck(ctx *fasthttp.RequestCtx, req *transport.KernelBaseRequest, logger2 *logrus.Logger, token string) bool {

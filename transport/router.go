@@ -261,6 +261,9 @@ func ProcessStandardRouting(server PathesLogger) fasthttp.RequestHandler {
 	}
 }
 
+//todo ProcessStandardRoutingAllowCORS
+// как при этом настраивать какие хедеры слать в случае - может метод, если пустой, то стандартный хэндлер
+
 // GetHTTPClient returns client from pool
 func GetHTTPClient() *fasthttp.Client {
 	return clientsPool.Get().(*fasthttp.Client)
@@ -281,6 +284,7 @@ func handlerInternalStats(ctx *fasthttp.RequestCtx, now time.Time, adds ...strin
 	for k, v := range timingsReg {
 		res.WriteString(fmt.Sprintf("%s: %s\n", k, v))
 	}
+
 	ctx.SetBodyString(res.String())
 }
 
@@ -294,6 +298,7 @@ func handlerInternalStatsSimple(ctx *fasthttp.RequestCtx) {
 	for k, v := range timingsReg {
 		res.WriteString(fmt.Sprintf("%s: %s\n", k, v))
 	}
+
 	ctx.SetBodyString(res.String())
 }
 
